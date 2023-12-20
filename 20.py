@@ -1,4 +1,5 @@
-from math import lcm, prod
+from math import prod
+import graphviz
 import main
 
 LOW = 0
@@ -48,6 +49,38 @@ def push_button(modules):
                     signals.append({"src": s["dest"], "type": LOW, "dest": dest})
 
     return modules, signals_history
+
+
+def visualize(modules, before_rx, before_before_rx, start_of_loops, end_of_loops):
+    graph = graphviz.Graph("Level 20")
+    for module_name, module in modules.items():
+        label = module_name
+        if module["type"]:
+            label = module["type"] + " " + label
+
+        if module_name == "rx":
+            color = "firebrick2"
+        elif module_name == before_rx:
+            color = "brown1"
+        elif module_name in before_before_rx:
+            color = "chocolate1"
+        elif module_name in start_of_loops:
+            color = "darkolivegreen2"
+        elif module_name in end_of_loops:
+            color = "goldenrod1"
+        else:
+            color = ""
+
+        if module_name in ["button", "broadcaster", "rx"]:
+            shape = "doubleellipse"
+        else:
+            shape = "ellipse"
+
+        graph.node(module_name, label=label, color=color, style="filled", shape=shape)
+    for module_name, module in modules.items():
+        for dest in module["dests"]:
+            graph.edge(module_name, dest, dir="forward")
+    graph.render("lvl20.graf")
 
 
 def parse_input(lines):
@@ -145,6 +178,8 @@ def part_2(lines):
         end_of_loops.append(tmp[0])
 
     start_of_loops = all_modules["broadcaster"]["dests"]
+
+    visualize(all_modules, before_rx, before_before_rx, start_of_loops, end_of_loops)
 
     loops = {}
     for origin in start_of_loops:
