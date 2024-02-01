@@ -10,24 +10,34 @@ from config import config
 def main():
     parser = argparse.ArgumentParser(prog="Avent of code")
     parser.add_argument("-l", "--level", required=False, default=None)
+    parser.add_argument("-y", "--year", required=False, default=None)
     parser.add_argument("-f", "--use_fixtures", required=False, action="store_true")
     parser.add_argument("-1", "--part_1", required=False, action="store_true")
     parser.add_argument("-2", "--part_2", required=False, action="store_true")
     args = parser.parse_args()
 
-    if args.level:
-        config.level_to_run = args.level
+    if args.year:
+        config.year = args.year
     else:
-        levels_available = [f for f in os.listdir(".") if re.search(r"^\d{2}\.py$", f)]
+        years_available = [int(d) for d in os.listdir(".") if re.search(r"^\d{4}$", d)]
+        print(f"years_available : {years_available}")
+        config.year = max(years_available)
+    config.year = str(config.year)
+    config.url = config.base_url.replace("{year}", config.year)
+
+    if args.level:
+        config.level = args.level
+    else:
+        levels_available = [
+            f for f in os.listdir(config.year) if re.search(r"^\d{2}\.py$", f)
+        ]
         print(f"levels_available : {levels_available}")
-        config.level_to_run = max(
-            [int(l.removesuffix(".py")) for l in levels_available]
-        )
+        config.level = max([int(l.removesuffix(".py")) for l in levels_available])
+    config.url = config.url.replace("{day}", str(config.level))
+    config.level = f"{int(config.level):02d}"
 
-    config.level_to_run_str = f"{int(config.level_to_run):02d}"
-
-    print(f"Loading {config.level_to_run_str}.py\n")
-    level = importlib.import_module(config.level_to_run_str)
+    print(f"Loading {config.level}.py\n")
+    level = importlib.import_module(config.year + "." + config.level)
 
     config.use_fixtures = args.use_fixtures
 
@@ -39,7 +49,7 @@ def main():
 
 
 def send_answer(level: int, answer: str) -> str:
-    url = f"{config.url}/{str(config.level_to_run)}/answer"
+    url = f"{config.url}/answer"
     data = {"level": level, "answer": answer}
 
     print(f"Sending response {data} to {url}")
@@ -53,7 +63,7 @@ def send_answer(level: int, answer: str) -> str:
 
 
 def load_data() -> str:
-    url = f"{config.url}/{str(config.level_to_run)}/input"
+    url = f"{config.url}/input"
     print(f"Loading {url}")
 
     response = requests.get(url=url, cookies=config.cookies)
@@ -61,9 +71,9 @@ def load_data() -> str:
 
 
 def load_fixtures(name: str) -> str:
-    print(f"fixtures/level_{config.level_to_run_str}_{name}.txt")
+    print(f"fixtures/level_{config.level}_{name}.txt")
     try:
-        with open(f"fixtures/level_{config.level_to_run_str}_{name}.txt") as fixture:
+        with open(f"fixtures/level_{config.level}_{name}.txt") as fixture:
             return fixture.read()
     except FileExistsError as e:
         print("Fixture file not found")
