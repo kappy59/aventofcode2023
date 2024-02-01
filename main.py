@@ -71,9 +71,9 @@ def load_data() -> str:
 
 
 def load_fixtures(name: str) -> str:
-    print(f"fixtures/level_{config.level}_{name}.txt")
+    print(f"{config.year}/fixtures/level_{config.level}_{name}.txt")
     try:
-        with open(f"fixtures/level_{config.level}_{name}.txt") as fixture:
+        with open(f"{config.year}/fixtures/level_{config.level}_{name}.txt") as fixture:
             return fixture.read()
     except FileExistsError as e:
         print("Fixture file not found")
